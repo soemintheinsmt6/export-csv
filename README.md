@@ -151,6 +151,30 @@ the Gemini app instead (`+` → NotebookLM). For a recurring cross-cutting view,
 dedicated notebook holding just the summary sheets works better than relying on
 that.
 
+## The app icon
+
+Both platforms' icons are generated from one painter, so they cannot drift
+apart:
+
+```bash
+flutter test tool/generate_icon_preview.dart   # build/icon_preview.png, candidates at 16-1024px
+flutter test tool/generate_app_icon.dart       # writes the real assets
+```
+
+`tool/app_icon_painter.dart` holds the artwork, expressed as fractions of the
+canvas so one routine serves the 1024px master and the 16px menu-bar version.
+The generator writes the seven macOS PNGs in the `.appiconset` and assembles
+`windows/runner/resources/app_icon.ico` by hand — a PNG entry at 256px and
+32-bit DIBs below it, which is how the Flutter template's own icon is built.
+
+macOS artwork is inset to about 80% of its canvas, following Apple's icon grid,
+so it sits at the same visual size as its neighbours in the Dock. Windows icons
+are full-bleed.
+
+The generated files are committed, because the release workflows package them
+and do not run the generator. Neither generator lives in `test/`, so
+`flutter test` will not run them by accident and overwrite the assets.
+
 ## Development
 
 ```bash
