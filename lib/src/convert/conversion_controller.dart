@@ -61,7 +61,7 @@ class ConversionController extends ChangeNotifier {
   bool addBom = false;
   bool tidyFileNames = true;
   bool splitLargeSheets = true;
-  bool mergeDailySheets = false;
+  bool mergeDailySheets = true;
 
   bool _running = false;
   bool get isRunning => _running;

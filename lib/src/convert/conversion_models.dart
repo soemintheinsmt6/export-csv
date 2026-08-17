@@ -7,7 +7,7 @@ class ConversionOptions {
     this.addBom = false,
     this.tidyFileNames = true,
     this.splitLargeSheets = true,
-    this.mergeDailySheets = false,
+    this.mergeDailySheets = true,
   });
 
   /// Combines sheets named after dates into a single CSV per workbook, with a

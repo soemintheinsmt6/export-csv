@@ -234,7 +234,7 @@ void main() {
       ]);
     });
 
-    test('is off by default, so one sheet still means one file', () async {
+    test('is on by default', () async {
       final source = p.join(temp.path, 'Branch.xlsx');
       writeFixtureWorkbook(source, sheets: [
         FixtureSheet('1-6-2026', sheetXml(1, [['Code'], ['A1']])),
@@ -245,6 +245,28 @@ void main() {
       await convertWorkbook(
         sourcePath: source,
         options: ConversionOptions(outputDirectory: out),
+      );
+
+      expect(
+        Directory(out).listSync().map((e) => p.basename(e.path)).toSet(),
+        {'Branch(Daily 2026-06-01 to 2026-06-02).csv'},
+      );
+    });
+
+    test('turning it off gives one file per sheet again', () async {
+      final source = p.join(temp.path, 'Branch.xlsx');
+      writeFixtureWorkbook(source, sheets: [
+        FixtureSheet('1-6-2026', sheetXml(1, [['Code'], ['A1']])),
+        FixtureSheet('2-6-2026', sheetXml(1, [['Code'], ['A2']])),
+      ]);
+
+      final out = p.join(temp.path, 'out');
+      await convertWorkbook(
+        sourcePath: source,
+        options: ConversionOptions(
+          outputDirectory: out,
+          mergeDailySheets: false,
+        ),
       );
 
       expect(

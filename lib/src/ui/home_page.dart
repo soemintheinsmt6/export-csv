@@ -144,8 +144,8 @@ class _Header extends StatelessWidget {
                       ?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 Text(
-                  'One CSV per sheet, named Workbook(Sheet).csv — ready to '
-                  'upload to NotebookLM.',
+                  'One CSV per sheet, named Workbook(Sheet).csv, with daily '
+                  'tabs merged — ready to upload to NotebookLM.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -342,7 +342,9 @@ class _ControlPanel extends StatelessWidget {
           const SizedBox(height: 4),
           Wrap(
             spacing: 16,
-            runSpacing: 0,
+            // Only applies between rows, so the panel keeps its height while
+            // the chips fit on one line and opens up once they wrap.
+            runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _OptionChip(

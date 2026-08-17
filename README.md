@@ -28,7 +28,7 @@ Options along the bottom:
 
 | Option | Default | Effect |
 | --- | --- | --- |
-| Merge daily sheets | off | Combines date-named tabs into one file with a `Sheet date` column, instead of one source per day |
+| Merge daily sheets | on | Combines date-named tabs into one file with a `Sheet date` column, instead of one source per day |
 | Split large sheets | on | Splits a sheet too big for one NotebookLM source into as few files as possible, each repeating the header |
 | Shorten file names | on | Drops a tracking id an export tool appended, so `Stock-Balance__ef86c541-70a3-…` becomes `Stock-Balance` |
 | Include hidden sheets | on | Hidden tabs are exported too, since they sometimes hold real data |
@@ -64,8 +64,9 @@ responsive and a large ledger does not have to fit in memory.
 
 A month of tabs named `1-June-2026`, `2-Jun-2026`, `30-6-2026` is one table
 split across thirty sheets, not thirty documents — but it costs thirty of a
-notebook's sources. **Merge daily sheets** writes them as one file instead,
-adding a leading `Sheet date` column holding the day each row came from:
+notebook's sources. **Merge daily sheets**, on by default, writes them as one
+file instead, adding a leading `Sheet date` column holding the day each row
+came from:
 
 ```
 Sheet date,No.,Code,Item,Qty
@@ -86,7 +87,8 @@ Sheet date,No.,Code,Item,Qty
   rather than being guessed at.
 
 The merged file is still split if it exceeds a source's limit, so a month of
-dailies typically ends up as one to three sources instead of thirty.
+dailies typically ends up as one to three sources instead of thirty. Turn the
+option off to get one file per sheet, whatever the tabs are called.
 
 ## Why sheets get split
 
