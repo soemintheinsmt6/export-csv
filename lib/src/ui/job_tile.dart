@@ -144,6 +144,8 @@ class _SheetRow extends StatelessWidget {
     final label = switch (sheet) {
       SheetOutcome(status: SheetStatus.converted, wasSplit: true) =>
         '${p.basename(sheet.outputPaths.first)}  +${sheet.outputPaths.length - 1} more',
+      SheetOutcome(status: SheetStatus.converted, wasMerged: true) =>
+        '${p.basename(sheet.outputPath!)}  (${sheet.mergedSheetCount} sheets)',
       SheetOutcome(status: SheetStatus.converted) =>
         p.basename(sheet.outputPath!),
       _ => '${sheet.sheetName} — ${sheet.message ?? 'Skipped'}',

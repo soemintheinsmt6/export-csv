@@ -32,7 +32,7 @@ class SheetCsvWriter {
   final int? tokenBudget;
 
   /// How far into the sheet to look for the row holding the column names.
-  static const int _headerScanDepth = 6;
+  static const int headerScanDepth = 6;
 
   /// Upper bound on how many opening rows get repeated, so an odd sheet can
   /// never turn its whole top into a header block.
@@ -62,7 +62,7 @@ class SheetCsvWriter {
 
     if (_headerRows == null) {
       _pending.add(cells);
-      if (_pending.length >= _headerScanDepth) await _resolveHeader();
+      if (_pending.length >= headerScanDepth) await _resolveHeader();
       return;
     }
 
@@ -174,7 +174,7 @@ class SheetCsvWriter {
   static List<List<String>> chooseHeaderRows(List<List<String>> rows) {
     if (rows.isEmpty) return const [];
 
-    final limit = math.min(rows.length, _headerScanDepth);
+    final limit = math.min(rows.length, headerScanDepth);
     for (var i = 0; i < limit; i++) {
       final row = rows[i];
       final filled = row.where((cell) => cell.trim().isNotEmpty).length;

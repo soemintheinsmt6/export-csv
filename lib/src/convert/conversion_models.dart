@@ -7,7 +7,15 @@ class ConversionOptions {
     this.addBom = false,
     this.tidyFileNames = true,
     this.splitLargeSheets = true,
+    this.mergeDailySheets = false,
   });
+
+  /// Combines sheets named after dates into a single CSV per workbook, with a
+  /// column recording the day each row came from.
+  ///
+  /// A month of daily tabs is one table split across thirty sheets, not thirty
+  /// documents, and a notebook's source allowance is spent either way.
+  final bool mergeDailySheets;
 
   /// Splits a sheet across several CSVs when it would be too large for
   /// NotebookLM to accept as one source, filling each file to the limit first.
@@ -53,6 +61,7 @@ class SheetOutcome {
     required this.status,
     this.outputPaths = const [],
     this.rowCount = 0,
+    this.mergedSheetCount = 0,
     this.message,
   });
 
@@ -64,12 +73,21 @@ class SheetOutcome {
   final List<String> outputPaths;
 
   final int rowCount;
+
+  /// How many sheets went into this file, when daily sheets were merged.
+  final int mergedSheetCount;
+
   final String? message;
 
   String? get outputPath => outputPaths.isEmpty ? null : outputPaths.first;
 
   bool get wasSplit => outputPaths.length > 1;
+
+  bool get wasMerged => mergedSheetCount > 1;
 }
+
+/// Header of the column added when daily sheets are merged.
+const String dateColumnName = 'Sheet date';
 
 /// What happened to one workbook.
 class WorkbookOutcome {

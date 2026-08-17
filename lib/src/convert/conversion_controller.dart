@@ -61,6 +61,7 @@ class ConversionController extends ChangeNotifier {
   bool addBom = false;
   bool tidyFileNames = true;
   bool splitLargeSheets = true;
+  bool mergeDailySheets = false;
 
   bool _running = false;
   bool get isRunning => _running;
@@ -123,6 +124,11 @@ class ConversionController extends ChangeNotifier {
 
   void setSplitLargeSheets(bool value) {
     splitLargeSheets = value;
+    notifyListeners();
+  }
+
+  void setMergeDailySheets(bool value) {
+    mergeDailySheets = value;
     notifyListeners();
   }
 
@@ -206,6 +212,7 @@ class ConversionController extends ChangeNotifier {
       addBom: addBom,
       tidyFileNames: tidyFileNames,
       splitLargeSheets: splitLargeSheets,
+      mergeDailySheets: mergeDailySheets,
     );
 
     _subscription = _runner

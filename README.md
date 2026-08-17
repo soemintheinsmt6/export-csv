@@ -28,6 +28,7 @@ Options along the bottom:
 
 | Option | Default | Effect |
 | --- | --- | --- |
+| Merge daily sheets | off | Combines date-named tabs into one file with a `Sheet date` column, instead of one source per day |
 | Split large sheets | on | Splits a sheet too big for one NotebookLM source into as few files as possible, each repeating the header |
 | Shorten file names | on | Drops a tracking id an export tool appended, so `Stock-Balance__ef86c541-70a3-…` becomes `Stock-Balance` |
 | Include hidden sheets | on | Hidden tabs are exported too, since they sometimes hold real data |
@@ -58,6 +59,34 @@ Re-running overwrites files of the same name in the output folder.
 
 Workbooks are read a row at a time in a background isolate, so the window stays
 responsive and a large ledger does not have to fit in memory.
+
+## Merging daily sheets
+
+A month of tabs named `1-June-2026`, `2-Jun-2026`, `30-6-2026` is one table
+split across thirty sheets, not thirty documents — but it costs thirty of a
+notebook's sources. **Merge daily sheets** writes them as one file instead,
+adding a leading `Sheet date` column holding the day each row came from:
+
+```
+Sheet date,No.,Code,Item,Qty
+2026-06-01,1,A1,Widget,5
+2026-06-02,2,A2,Gadget,7
+```
+
+- Tab names are read as day-first (`17-6-2026`, `1-Jun-26`, `13 June 2026`) and
+  as ISO (`2026-06-17`).
+- A label after the date starts its own series, so `17-6-2026 Plan Ground` is
+  merged with the other `Plan Ground` days rather than with the plain ones —
+  they are different tables that share a naming habit.
+- The header block is written once. Later days drop their copy of it only when
+  it matches exactly; a day with a different shape keeps every row it had.
+- A single dated sheet is left alone, since one day is not a series.
+- Names that only look like dates are left alone too. `2324-6-26` is a tab
+  covering the 23rd and 24th, not the year 2324, so it stays its own file
+  rather than being guessed at.
+
+The merged file is still split if it exceeds a source's limit, so a month of
+dailies typically ends up as one to three sources instead of thirty.
 
 ## Why sheets get split
 

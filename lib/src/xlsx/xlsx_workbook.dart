@@ -75,6 +75,11 @@ class XlsxWorkbook {
 
   final bool date1904;
 
+  /// Sheets not yet consumed, guarding against a second pass over one.
+  late final Set<String> _unread = {
+    for (final sheet in sheets) sheet.entryPath,
+  };
+
   static XlsxWorkbook open(String path) {
     _assertLooksLikeXlsx(path);
 
@@ -146,7 +151,18 @@ class XlsxWorkbook {
 
   /// Streams the rows of [sheet]. Rows the file omits entirely (blank rows) are
   /// not emitted; the gaps show up as jumps in [XlsxRow.number].
+  ///
+  /// A sheet can only be read once: its decompressed data is released as it is
+  /// consumed, to keep peak memory near one sheet rather than the whole
+  /// workbook. Iterating the same sheet twice throws rather than quietly
+  /// yielding nothing.
   Iterable<XlsxRow> readRows(XlsxSheet sheet) sync* {
+    if (!_unread.remove(sheet.entryPath)) {
+      throw StateError(
+        'Sheet "${sheet.name}" has already been read. Take what you need from '
+        'a single pass over readRows().',
+      );
+    }
     final xml = _readEntry(_archive, sheet.entryPath);
     if (xml == null) return;
 

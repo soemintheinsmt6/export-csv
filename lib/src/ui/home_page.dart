@@ -346,6 +346,16 @@ class _ControlPanel extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _OptionChip(
+                label: 'Merge daily sheets',
+                tooltip: 'Sheets named after dates (30-Jun-2026, 1-June-2026) '
+                    'become one file with a “Sheet date” column, instead of '
+                    'one NotebookLM source per day.',
+                value: controller.mergeDailySheets,
+                onChanged: controller.isRunning
+                    ? null
+                    : controller.setMergeDailySheets,
+              ),
+              _OptionChip(
                 label: 'Split large sheets',
                 tooltip: 'NotebookLM caps a spreadsheet source at about '
                     '100,000 tokens. Oversized sheets are split into as few '
