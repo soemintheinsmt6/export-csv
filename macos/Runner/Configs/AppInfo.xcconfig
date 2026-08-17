@@ -8,7 +8,7 @@
 PRODUCT_NAME = Excel to CSV
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.exportCsv
+PRODUCT_BUNDLE_IDENTIFIER = io.github.soemintheinsmt6.exportCsv
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Soe Min Thein. All rights reserved.
