@@ -1,0 +1,90 @@
+name: Build macOS DMG
+
+on:
+  push:
+    branches: [deploy]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to deploy supersedes one still building.
+concurrency:
+  group: build-macos-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.44.9
+  APP_NAME: Excel to CSV
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # A deploy build should not ship something the tests reject.
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Read version from pubspec
+        id: version
+        run: |
+          version=$(grep '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d'+' -f1)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Building version $version"
+
+      - name: Build macOS app
+        run: flutter build macos --release
+
+      # The app is signed ad-hoc (CODE_SIGN_IDENTITY = "-"), which is what the
+      # project is set up for and needs no certificates. Gatekeeper will warn
+      # on first launch; see the release notes for how users get past it.
+      - name: Package DMG
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          app="build/macos/Build/Products/Release/${APP_NAME}.app"
+          test -d "$app" || { echo "::error::$app was not produced"; exit 1; }
+
+          stage="${RUNNER_TEMP}/dmg"
+          rm -rf "$stage"
+          mkdir -p "$stage" dist
+          cp -R "$app" "$stage/"
+          # The symlink is what makes the window a drag-to-install target.
+          ln -s /Applications "$stage/Applications"
+
+          hdiutil create \
+            -volname "${APP_NAME}" \
+            -srcfolder "$stage" \
+            -ov -format UDZO \
+            "dist/ExcelToCSV-${VERSION}-macos.dmg"
+
+      - name: Verify the DMG mounts and holds the app
+        run: |
+          set -euo pipefail
+          dmg=$(ls dist/*.dmg)
+          hdiutil attach -nobrowse -quiet "$dmg"
+          test -d "/Volumes/${APP_NAME}/${APP_NAME}.app"
+          hdiutil detach "/Volumes/${APP_NAME}" -quiet
+          ls -lh "$dmg"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ExcelToCSV-${{ steps.version.outputs.version }}-macos-dmg
+          path: dist/*.dmg
+          if-no-files-found: error

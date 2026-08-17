@@ -185,6 +185,59 @@ stores with each formula cell, which would export a ledger's totals as
 `=SUM(B2:B40)` instead of the number. Parsing the OOXML directly also means rows
 can be streamed instead of built into an object graph.
 
+## Releasing
+
+Two GitHub Actions workflows build the installers. Both run on a push to the
+**`deploy`** branch, and can also be started by hand from the Actions tab
+(*Run workflow*).
+
+| Workflow | Runner | Produces |
+| --- | --- | --- |
+| `.github/workflows/build-macos.yml` | `macos-latest` | `ExcelToCSV-<version>-macos.dmg` |
+| `.github/workflows/build-windows.yml` | `windows-latest` | `ExcelToCSV-<version>-windows-x64-setup.exe` |
+
+Each one installs dependencies, runs `flutter analyze` and `flutter test`, then
+builds and packages. A deploy that fails its tests produces no installer.
+
+To cut a release:
+
+```bash
+# set the version first — it names the installers
+$EDITOR pubspec.yaml          # version: 1.0.1+2
+
+git switch -c deploy          # first time only
+git merge main
+git push -u origin deploy
+```
+
+The installers appear as workflow artifacts on the run. The version comes from
+`pubspec.yaml`, so bump it before pushing or the new build overwrites the old
+name.
+
+### The installers are not code-signed
+
+Neither is signed with a paid developer certificate, so both operating systems
+warn on first launch. This is expected, not a fault in the build.
+
+- **macOS** — the app is signed ad-hoc, which is enough to run but not enough
+  for Gatekeeper. On first launch, right-click the app and choose *Open*, then
+  confirm. If macOS insists the app is damaged, clear the quarantine flag:
+  `xattr -dr com.apple.quarantine "/Applications/Excel to CSV.app"`.
+- **Windows** — SmartScreen shows *"Windows protected your PC"*. Choose *More
+  info* → *Run anyway*. The installer writes to the user's own program folder
+  by default, so it does not ask for administrator rights.
+
+Signing properly needs an Apple Developer account (and notarisation) and a
+Windows code-signing certificate. Both are paid, and neither is needed to run
+the app yourself.
+
+### Windows notes
+
+The installer bundles the MSVC runtime DLLs beside the executable, so it does
+not depend on the Visual C++ Redistributable being present. `windows/packaging/
+export_csv.iss` is the Inno Setup script; its `AppId` identifies the app to
+Windows across upgrades and must never change.
+
 ## File permissions
 
 **Windows** — nothing to grant. The app runs with your own account's rights

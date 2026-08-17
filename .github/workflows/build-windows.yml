@@ -1,0 +1,88 @@
+name: Build Windows installer
+
+on:
+  push:
+    branches: [deploy]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to deploy supersedes one still building.
+concurrency:
+  group: build-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.44.9
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # A deploy build should not ship something the tests reject.
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Read version from pubspec
+        id: version
+        shell: pwsh
+        run: |
+          $line = Select-String -Path pubspec.yaml -Pattern '^version:\s*(\S+)' | Select-Object -First 1
+          $version = $line.Matches[0].Groups[1].Value.Split('+')[0]
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Building version $version"
+
+      - name: Build Windows app
+        run: flutter build windows --release
+
+      # Flutter links against the MSVC runtime rather than bundling it. Most
+      # machines already have the redistributable, but copying the DLLs beside
+      # the executable makes the installer self-contained. Best effort: if the
+      # runner's layout ever changes, the build carries on without them.
+      - name: Bundle the MSVC runtime
+        shell: pwsh
+        run: |
+          $release = "build\windows\x64\runner\Release"
+          $crt = Get-ChildItem -Path "C:\Program Files*\Microsoft Visual Studio\*\*\VC\Redist\MSVC\*\x64\Microsoft.VC*.CRT" `
+            -Directory -ErrorAction SilentlyContinue | Sort-Object FullName | Select-Object -Last 1
+          if ($null -eq $crt) {
+            Write-Warning "MSVC redistributable DLLs not found; the app will need the Visual C++ runtime installed."
+            exit 0
+          }
+          Write-Host "Copying runtime from $($crt.FullName)"
+          Copy-Item -Path (Join-Path $crt.FullName '*.dll') -Destination $release -Force
+          Get-ChildItem $release -Filter '*.dll' | Select-Object Name
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress --yes
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found at $iscc" }
+          & $iscc "/DAppVersion=${{ steps.version.outputs.version }}" "windows\packaging\export_csv.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with $LASTEXITCODE" }
+          Get-ChildItem dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ExcelToCSV-${{ steps.version.outputs.version }}-windows-setup
+          path: dist/*.exe
+          if-no-files-found: error
